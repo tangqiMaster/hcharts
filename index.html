@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>hcharts</title>
+    <link href="http://www.jq22.com/jquery/bootstrap-3.3.4.css" rel="stylesheet">
+	<style>
+		table thead{display: block;}
+        table tbody{display: block; max-height: 400px; overflow: auto;}
+        #city{
+            width: 180px;
+        }
+        #district{
+            width: 180px;
+        }
+	</style>
+</head>
+<body>
+
+	<!-- 省市区下拉框 -->
+	<div class="docs-methods" style="position: absolute;top: 20px;right: 20px;z-index: 9999">
+        <form class="form-inline">
+            <div id="distpicker">
+                <div class="form-group">
+                    <label class="sr-only" for="province">省份</label>
+                    <select class="form-control" id="province" onchange="changeProvince()"></select>
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="city">市级</label>
+                    <select class="form-control" id="city" onchange="changeCity()"></select>
+                </div>
+<!--                 <div class="form-group">
+                    <label class="sr-only" for="district">县区</label>
+                    <select class="form-control" id="district"></select>
+                </div> -->
+                <div class="form-group">
+<!--                         <button class="btn btn-primary" id="reset" type="button">Reset</button>
+                    <button class="btn btn-warning" id="reset-deep" type="button">Reset (deep)</button>
+                    <button class="btn btn-danger" id="destroy" type="button">Destroy</button> -->
+                    <!-- <button class="btn btn-danger" id="getResult" type="button">获取</button> -->
+                </div>
+            </div>
+        </form>
+        <!-- 数据表格 -->
+        <table class="table table-bordered table-hover text-center" id="tableData" style="margin-top: 20px;position: relative;border: none;width:100%;">
+            <tr class="info row">
+                <td class="col-md-3">序号</td>
+                <td class="col-md-6">地区名</td>
+                <td class="col-md-3">销量</td>
+            </tr>
+        </table>
+
+    </div>
+
+    <!-- 地图 -->
+	<div id="map" style="width:900px;height: 500px;	"></div>
+
+	<!-- bootstrip -->
+    <script src="http://www.jq22.com/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://www.jq22.com/jquery/bootstrap-3.3.4.js"></script>
+
+    <!-- 省市区插件 -->
+    <script src="static/js/distpicker.data.js"></script>
+    <script src="static/js/distpicker.js"></script>
+
+    <!-- 地图插件 -->
+	<script src="https://img.hcharts.cn/highmaps/highmaps.js"></script>
+	<script src="https://data.jianshukeji.com/geochina/china.js"></script>
+	<script src="" id="mapScript"></script>
+	<script src="https://img.hcharts.cn/highcharts/themes/dark-blue.js"></script>
+<!-- 	<script src="https://data.jianshukeji.com/geochina/beijing.js"></script>
+	<script src="https://data.jianshukeji.com/geochina/tianjin.js"></script>
+	<script src="https://data.jianshukeji.com/geochina/hebei.js"></script> -->
+
+	<script>
+		// 总数据
+        var allData = [
+        	{
+        		provinceName : "北京市",
+        		provincePin : "beijing",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"东城区","value":42},
+    				{"name":"西城区","value":31},
+    				{"name":"朝阳区","value":6},
+    				{"name":"丰台区","value":29},
+    				{"name":"石景山区","value":6},
+    				{"name":"海淀区","value":56},
+    				{"name":"门头沟区","value":74},
+    				{"name":"房山区","value":97},
+    				{"name":"通州区","value":77},
+    				{"name":"顺义区","value":35},
+    				{"name":"昌平区","value":54},
+    				{"name":"大兴区","value":2},
+    				{"name":"怀柔区","value":66},
+    				{"name":"平谷区","value":84},
+    				{"name":"密云区","value":85},
+    				{"name":"延庆区","value":14}
+        		]
+        	},
+        	{
+        		provinceName : "天津市",
+        		provincePin : "tianjin",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"和平区","value":60},{"name":"河东区","value":27},{"name":"河西区","value":52},{"name":"南开区","value":87},{"name":"河北区","value":38},{"name":"红桥区","value":46},{"name":"东丽区","value":80},{"name":"西青区","value":66},{"name":"津南区","value":29},{"name":"北辰区","value":20},{"name":"武清区","value":98},{"name":"宝坻区","value":96},{"name":"滨海新区","value":74},{"name":"宁河区","value":80},{"name":"静海区","value":27},{"name":"蓟州区","value":78}
+        		]
+        	},
+        	{
+        		provinceName : "河北省",
+        		provincePin : "hebei",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"石家庄","value":23},{"name":"唐山","value":85},{"name":"秦皇岛","value":36},{"name":"邯郸","value":78},{"name":"邢台","value":96},{"name":"保定","value":48},{"name":"张家口","value":47},{"name":"承德","value":50},{"name":"沧州","value":42},{"name":"廊坊","value":39},{"name":"衡水","value":71}
+        		]
+        	},
+        	{
+        		provinceName : "山西省",
+        		provincePin : "shanxi",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"太原市","value":27,"district":[
+    					{
+    						name : "小店区",
+    						value : 24
+    					},
+    					{
+    						name : "迎泽区",
+    						value : 24
+    					},
+    					{
+    						name : "杏花岭区",
+    						value : 24
+    					},
+    					{
+    						name : "尖草坪区",
+    						value : 24
+    					},
+    					{
+    						name : "万柏林区",
+    						value : 24
+    					},
+    					{
+    						name : "晋源区",
+    						value : 24
+    					},
+    					{
+    						name : "清徐县",
+    						value : 24
+    					},
+    					{
+    						name : "阳曲县",
+    						value : 24
+    					},
+    					{
+    						name : "娄烦县",
+    						value : 24
+    					},
+    					{
+    						name : "古交市",
+    						value : 24
+    					}
+    				]},{"name":"大同","value":82},{"name":"阳泉","value":35},{"name":"长治","value":20},{"name":"晋城","value":77},{"name":"朔州","value":19},{"name":"晋中","value":61},{"name":"运城","value":2},{"name":"忻州","value":70},{"name":"临汾","value":45},{"name":"吕梁","value":8}
+        		]
+        	},
+        	{
+        		provinceName : "内蒙古自治区",
+        		provincePin : "neimenggu",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"呼和浩特","value":42},{"name":"包头","value":6},{"name":"乌海","value":4},{"name":"赤峰","value":45},{"name":"通辽","value":12},{"name":"鄂尔多斯","value":72},{"name":"呼伦贝尔","value":86},{"name":"巴彦淖尔","value":7},{"name":"乌兰察布","value":67},{"name":"兴安盟","value":13},{"name":"锡林郭勒盟","value":29},{"name":"阿拉善盟","value":8}
+        		]
+        	},
+        	{
+        		provinceName : "辽宁省",
+        		provincePin : "liaoning",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"长春","value":68},{"name":"吉林","value":15},{"name":"四平","value":38},{"name":"辽源","value":16},{"name":"通化","value":81},{"name":"白山","value":26},{"name":"松原","value":68},{"name":"白城","value":4},{"name":"延边","value":26},{"name":"沈阳","value":28},{"name":"大连","value":49},{"name":"鞍山","value":95},{"name":"抚顺","value":49},{"name":"本溪","value":95},{"name":"丹东","value":77},{"name":"锦州","value":38},{"name":"营口","value":42},{"name":"阜新","value":73},{"name":"辽阳","value":10},{"name":"盘锦","value":11},{"name":"铁岭","value":8},{"name":"朝阳","value":52},{"name":"葫芦岛","value":99}
+        		]
+        	},
+        	{
+        		provinceName : "吉林省",
+        		provincePin : "jilin",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"长春","value":46},{"name":"吉林","value":54},{"name":"四平","value":98},{"name":"辽源","value":79},{"name":"通化","value":70},{"name":"白山","value":48},{"name":"松原","value":55},{"name":"白城","value":18},{"name":"延边","value":54}
+        		]
+        	},
+        	{
+        		provinceName : "黑龙江省",
+        		provincePin : "heilongjiang",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"哈尔滨","value":70},{"name":"齐齐哈尔","value":41},{"name":"鸡西","value":89},{"name":"鹤岗","value":25},{"name":"双鸭山","value":61},{"name":"大庆","value":81},{"name":"伊春","value":52},{"name":"佳木斯","value":85},{"name":"七台河","value":39},{"name":"牡丹江","value":81},{"name":"黑河","value":36},{"name":"绥化","value":16},{"name":"大兴安岭","value":91}
+        		]
+        	},
+			{
+        		provinceName : "上海市",
+        		provincePin : "shanghai",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"黄浦区","value":61},{"name":"徐汇区","value":56},{"name":"长宁区","value":31},{"name":"静安区","value":86},{"name":"普陀区","value":9},{"name":"虹口区","value":21},{"name":"杨浦区","value":77},{"name":"闵行区","value":54},{"name":"宝山区","value":99},{"name":"嘉定区","value":50},{"name":"浦东新区","value":88},{"name":"金山区","value":94},{"name":"松江区","value":52},{"name":"青浦区","value":96},{"name":"奉贤区","value":68},{"name":"崇明区","value":95}
+        		]
+        	},
+        	{
+        		provinceName : "江苏省",
+        		provincePin : "jiangsu",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"南京","value":70},{"name":"无锡","value":32},{"name":"徐州","value":7},{"name":"常州","value":79},{"name":"苏州","value":76},{"name":"南通","value":48},{"name":"连云港","value":45},{"name":"淮安","value":78},{"name":"盐城","value":67},{"name":"扬州","value":47},{"name":"镇江","value":78},{"name":"泰州","value":8},{"name":"宿迁","value":80}
+        		]
+        	},
+        	{
+        		provinceName : "浙江省",
+        		provincePin : "zhejiang",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"杭州","value":41},{"name":"宁波","value":96},{"name":"温州","value":64},{"name":"嘉兴","value":86},{"name":"湖州","value":60},{"name":"绍兴","value":22},{"name":"金华","value":100},{"name":"衢州","value":9},{"name":"舟山","value":59},{"name":"台州","value":37},{"name":"丽水","value":18}
+        		]
+        	},
+        	{
+        		provinceName : "安徽省",
+        		provincePin : "anhui",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"合肥","value":4},{"name":"芜湖","value":16},{"name":"蚌埠","value":3},{"name":"淮南","value":42},{"name":"马鞍山","value":16},{"name":"淮北","value":43},{"name":"铜陵","value":6},{"name":"安庆","value":33},{"name":"黄山","value":73},{"name":"滁州","value":22},{"name":"阜阳","value":83},{"name":"宿州","value":60},{"name":"六安","value":23},{"name":"亳州","value":63},{"name":"池州","value":48},{"name":"宣城","value":27}
+        		]
+        	},
+        	{
+        		provinceName : "福建省",
+        		provincePin : "fujian",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"福州","value":14},{"name":"厦门","value":65},{"name":"莆田","value":22},{"name":"三明","value":6},{"name":"泉州","value":51},{"name":"漳州","value":96},{"name":"南平","value":4},{"name":"龙岩","value":28},{"name":"宁德","value":88}
+        		]
+        	},
+        	{
+        		provinceName : "江西省",
+        		provincePin : "jiangxi",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"南昌","value":87},{"name":"景德镇","value":4},{"name":"萍乡","value":55},{"name":"九江","value":98},{"name":"新余","value":6},{"name":"鹰潭","value":34},{"name":"赣州","value":70},{"name":"吉安","value":38},{"name":"宜春","value":87},{"name":"抚州","value":88},{"name":"上饶","value":43}
+        		]
+        	},
+        	{
+        		provinceName : "山东省",
+        		provincePin : "shandong",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"济南","value":25},{"name":"青岛","value":39},{"name":"淄博","value":52},{"name":"枣庄","value":67},{"name":"东营","value":21},{"name":"烟台","value":93},{"name":"潍坊","value":89},{"name":"济宁","value":84},{"name":"泰安","value":84},{"name":"威海","value":16},{"name":"日照","value":41},{"name":"莱芜","value":49},{"name":"临沂","value":11},{"name":"德州","value":19},{"name":"聊城","value":14},{"name":"滨州","value":86},{"name":"菏泽","value":89}
+        		]
+        	},
+        	{
+        		provinceName : "河南省",
+        		provincePin : "henan",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"郑州","value":84},{"name":"开封","value":13},{"name":"洛阳","value":15},{"name":"平顶山","value":54},{"name":"安阳","value":43},{"name":"鹤壁","value":1},{"name":"新乡","value":90},{"name":"焦作","value":47},{"name":"濮阳","value":3},{"name":"许昌","value":33},{"name":"漯河","value":83},{"name":"三门峡","value":36},{"name":"南阳","value":58},{"name":"商丘","value":29},{"name":"信阳","value":46},{"name":"周口","value":6},{"name":"驻马店","value":29},{"name":"济源","value":36}
+        		]
+        	},
+        	{
+        		provinceName : "湖北省",
+        		provincePin : "hubei",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"武汉","value":91},{"name":"黄石","value":55},{"name":"十堰","value":79},{"name":"宜昌","value":45},{"name":"襄阳","value":89},{"name":"鄂州","value":15},{"name":"荆门","value":98},{"name":"孝感","value":12},{"name":"荆州","value":13},{"name":"黄冈","value":40},{"name":"咸宁","value":15},{"name":"随州","value":61},{"name":"恩施","value":62},{"name":"仙桃","value":3},{"name":"潜江","value":18},{"name":"天门","value":100},{"name":"神农架","value":14}
+        		]
+        	},
+        	{
+        		provinceName : "湖南省",
+        		provincePin : "hunan",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"长沙","value":21},{"name":"株洲","value":41},{"name":"湘潭","value":51},{"name":"衡阳","value":92},{"name":"邵阳","value":60},{"name":"岳阳","value":82},{"name":"常德","value":67},{"name":"张家界","value":10},{"name":"益阳","value":7},{"name":"郴州","value":60},{"name":"永州","value":5},{"name":"怀化","value":33},{"name":"娄底","value":57},{"name":"湘西","value":96}
+        		]
+        	},
+        	{
+        		provinceName : "广东省",
+        		provincePin : "guangdong",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"广州","value":9},{"name":"韶关","value":21},{"name":"深圳","value":75},{"name":"珠海","value":27},{"name":"汕头","value":87},{"name":"佛山","value":72},{"name":"江门","value":38},{"name":"湛江","value":96},{"name":"茂名","value":51},{"name":"肇庆","value":72},{"name":"惠州","value":52},{"name":"梅州","value":31},{"name":"汕尾","value":1},{"name":"河源","value":79},{"name":"阳江","value":91},{"name":"清远","value":34},{"name":"东莞","value":25},{"name":"中山","value":33},{"name":"东沙群岛","value":79},{"name":"潮州","value":71},{"name":"揭阳","value":79},{"name":"云浮","value":100}
+        		]
+        	},
+        	{
+        		provinceName : "广西壮族自治区",
+        		provincePin : "guangxi",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"南宁","value":71},{"name":"柳州","value":65},{"name":"桂林","value":55},{"name":"梧州","value":13},{"name":"北海","value":28},{"name":"防城港","value":100},{"name":"钦州","value":18},{"name":"贵港","value":34},{"name":"玉林","value":79},{"name":"百色","value":10},{"name":"贺州","value":76},{"name":"河池","value":16},{"name":"来宾","value":43},{"name":"崇左","value":39}
+        		]
+        	},
+        	{
+        		provinceName : "海南省",
+        		provincePin : "hainan",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"海口","value":89},{"name":"三亚","value":96},{"name":"儋州","value":60},{"name":"五指山","value":16},{"name":"琼海","value":34},{"name":"文昌","value":28},{"name":"万宁","value":77},{"name":"东方","value":29},{"name":"定安县","value":25},{"name":"屯昌县","value":46},{"name":"澄迈县","value":44},{"name":"临高县","value":8},{"name":"白沙黎族","value":98},{"name":"昌江黎族","value":5},{"name":"乐东黎族","value":20},{"name":"陵水黎族","value":94},{"name":"保亭","value":73},{"name":"琼中","value":17}
+        		]
+        	},
+        	{
+        		provinceName : "重庆市",
+        		provincePin : "chongqing",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"万州区","value":47},{"name":"涪陵区","value":52},{"name":"渝中区","value":12},{"name":"大渡口区","value":74},{"name":"江北区","value":30},{"name":"沙坪坝区","value":100},{"name":"九龙坡区","value":98},{"name":"南岸区","value":89},{"name":"北碚区","value":42},{"name":"綦江区","value":41},{"name":"大足区","value":15},{"name":"渝北区","value":86},{"name":"巴南区","value":48},{"name":"黔江区","value":56},{"name":"长寿区","value":37},{"name":"江津区","value":67},{"name":"合川区","value":36},{"name":"永川区","value":10},{"name":"南川区","value":52},{"name":"璧山区","value":61},{"name":"铜梁区","value":8},{"name":"潼南区","value":10},{"name":"荣昌区","value":97},{"name":"开州区","value":10},{"name":"梁平区","value":18},{"name":"城口县","value":75},{"name":"丰都县","value":28},{"name":"垫江县","value":72},{"name":"武隆区","value":77},{"name":"忠县","value":91},{"name":"云阳县","value":75},{"name":"奉节县","value":38},{"name":"巫山县","value":71},{"name":"巫溪县","value":64},{"name":"石柱土家族","value":72},{"name":"秀山","value":6},{"name":"酉阳","value":92},{"name":"彭水苗族土家族","value":4}
+        		]
+        	},
+        	{
+        		provinceName : "四川省",
+        		provincePin : "sichuan",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"成都","value":94},{"name":"自贡","value":98},{"name":"攀枝花","value":92},{"name":"泸州","value":49},{"name":"德阳","value":18},{"name":"绵阳","value":5},{"name":"广元","value":76},{"name":"遂宁","value":17},{"name":"内江","value":41},{"name":"乐山","value":38},{"name":"南充","value":48},{"name":"眉山","value":76},{"name":"宜宾","value":84},{"name":"广安","value":60},{"name":"达州","value":16},{"name":"雅安","value":92},{"name":"巴中","value":57},{"name":"资阳","value":40},{"name":"阿坝羌族","value":51},{"name":"甘孜","value":91},{"name":"凉山彝族","value":85}
+        		]
+        	},
+        	{
+        		provinceName : "贵州省",
+        		provincePin : "guizhou",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"贵阳","value":99},{"name":"六盘水","value":56},{"name":"遵义","value":62},{"name":"安顺","value":49},{"name":"毕节","value":22},{"name":"铜仁","value":7},{"name":"黔西","value":48},{"name":"黔东","value":82},{"name":"黔","value":38}
+        		]
+        	},
+        	{
+        		provinceName : "云南省",
+        		provincePin : "yunnan",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"昆明","value":9},{"name":"曲靖","value":25},{"name":"玉溪","value":2},{"name":"保山","value":57},{"name":"昭通","value":18},{"name":"丽江","value":59},{"name":"普洱","value":51},{"name":"临沧","value":4},{"name":"楚雄彝族","value":51},{"name":"红河哈尼族彝族","value":28},{"name":"文山苗族","value":100},{"name":"西双版纳傣族","value":67},{"name":"大理白族","value":41},{"name":"德宏傣族景颇族","value":60},{"name":"怒江傈僳族","value":59},{"name":"迪庆","value":24}
+        		]
+        	},
+        	{
+        		provinceName : "西藏自治区",
+        		provincePin : "xizang",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"拉萨","value":65},{"name":"日喀则","value":88},{"name":"昌都","value":23},{"name":"林芝","value":25},{"name":"山南","value":61},{"name":"那曲","value":11},{"name":"阿里","value":89}
+        		]
+        	},
+        	{
+        		provinceName : "陕西省",
+        		provincePin : "shanxi2",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"拉萨","value":65},{"name":"日喀则","value":88},{"name":"昌都","value":23},{"name":"林芝","value":25},{"name":"山南","value":61},{"name":"那曲","value":11},{"name":"阿里","value":89}
+        		]
+        	},
+        	{
+        		provinceName : "甘肃省",
+        		provincePin : "gansu",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"兰州","value":78},{"name":"嘉峪关","value":79},{"name":"金昌","value":66},{"name":"白银","value":49},{"name":"天水","value":35},{"name":"武威","value":73},{"name":"张掖","value":41},{"name":"平凉","value":30},{"name":"酒泉","value":36},{"name":"庆阳","value":54},{"name":"定西","value":85},{"name":"陇南","value":96},{"name":"临夏","value":26},{"name":"甘南","value":97}
+        		]
+        	},
+        	{
+        		provinceName : "青海省",
+        		provincePin : "qinghai",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"西宁","value":45},{"name":"海东","value":10},{"name":"海北","value":76},{"name":"黄南","value":44},{"name":"海南","value":23},{"name":"果洛","value":99},{"name":"玉树","value":57},{"name":"海西","value":8}
+        		]
+        	},
+        	{
+        		provinceName : "宁夏回族自治区",
+        		provincePin : "ningxia",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"西宁","value":45},{"name":"海东","value":10},{"name":"海北","value":76},{"name":"黄南","value":44},{"name":"海南","value":23},{"name":"果洛","value":99},{"name":"玉树","value":57},{"name":"海西","value":8}
+        		]
+        	},
+        	{
+        		provinceName : "新疆维吾尔自治区",
+        		provincePin : "xinjiang",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"乌鲁木齐","value":87},{"name":"克拉玛依","value":8},{"name":"吐鲁番","value":68},{"name":"哈密","value":45},{"name":"昌吉","value":12},{"name":"博尔塔拉","value":88},{"name":"巴音郭楞","value":65},{"name":"阿克苏","value":5},{"name":"克孜勒苏柯尔克孜","value":39},{"name":"喀什","value":40},{"name":"和田","value":14},{"name":"伊犁哈萨克","value":29},{"name":"塔城","value":13},{"name":"阿勒泰","value":64},{"name":"石河子","value":18},{"name":"阿拉尔","value":90},{"name":"图木舒克","value":39},{"name":"五家渠","value":74},{"name":"北屯","value":15},{"name":"铁门关","value":5},{"name":"双河","value":97},{"name":"可克达拉","value":39},{"name":"昆玉","value":43}
+        		]
+        	},
+        	{
+        		provinceName : "香港特别行政区",
+        		provincePin : "xianggang",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"中西区","value":98},{"name":"湾仔区","value":42},{"name":"东区","value":95},{"name":"南区","value":68},{"name":"油尖旺区","value":56},{"name":"深水埗区","value":5},{"name":"九龙城区","value":24},{"name":"黄大仙区","value":31},{"name":"观塘区","value":92},{"name":"荃湾区","value":49},{"name":"屯门区","value":80},{"name":"元朗区","value":36},{"name":"北区","value":83},{"name":"大埔区","value":57},{"name":"西贡区","value":44},{"name":"沙田区","value":36},{"name":"葵青区","value":70},{"name":"离岛区","value":34}
+        		]
+        	},
+        	{
+        		provinceName : "澳门特别行政区",
+        		provincePin : "aomen",
+        		provinceTotal : 1234,
+        		city : [
+    				{"name":"花地玛堂区","value":18},{"name":"花王堂区","value":96},{"name":"望德堂区","value":18},{"name":"大堂区","value":34},{"name":"风顺堂区","value":9},{"name":"嘉模堂区","value":48},{"name":"路凼填海区","value":69},{"name":"圣方济各堂区","value":13}
+        		]
+        	},
+        ]
+
+        init();
+
+        // 程序启动
+        function init(){
+        	openSelec();
+        	provinceRender();
+        }
+
+        // 打开下拉框
+        function openSelec(){
+			var $distpicker = $('#distpicker');
+	        $distpicker.distpicker({
+	            province: '',
+	            autoSelect: false
+	        });
+		}
+
+		// 修改省份
+        function changeProvince(){
+        	$("#city").val("");
+        	if(!$("#province").val()){
+        		provinceRender();
+        	}else{
+        		renderMapData();
+        	}
+        }
+
+        // 修改城市
+        function changeCity(){
+        	if($("#province").val() && $("#city").val()){
+	        	for(var q = 0;q < allData.length;q++){
+	        		for(var m = 0;m < allData[q].city.length;m++){
+	        			console.log(allData[q].provinceName == $("#province").val());
+	        			console.log(allData[q].city[m].name);
+	        			console.log($("#city").val());
+	        			if(allData[q].provinceName == $("#province").val() && allData[q].city[m].name == $("#city").val()){
+	        				renderTable(allData[q].city[m].district);
+	        			}
+	        		}
+	        	};
+        	}
+        }
+
+        // 地图渲染
+        function renderMapData(){
+            // 单选省
+            if($("#province").val() && !$("#city").val() && !$("#district").val()){
+                if($("#province").val()){
+	                cityRender($("#province").val());
+                }
+            }
+        };
+
+        // 全国各个省份渲染
+        function provinceRender(){
+        	// 随机数据
+			var data = [{"name":"北京","value":4},{"name":"天津","value":88},{"name":"河北","value":28},{"name":"山西","value":97},{"name":"内蒙古","value":46},{"name":"辽宁","value":13},{"name":"吉林","value":46},{"name":"黑龙江","value":88},{"name":"上海","value":60},{"name":"江苏","value":47},{"name":"浙江","value":43},{"name":"安徽","value":24},{"name":"福建","value":41},{"name":"江西","value":11},{"name":"山东","value":85},{"name":"河南","value":3},{"name":"湖北","value":3},{"name":"湖南","value":70},{"name":"广东","value":46},{"name":"广西","value":77},{"name":"海南","value":15},{"name":"重庆","value":50},{"name":"四川","value":59},{"name":"贵州","value":78},{"name":"云南","value":47},{"name":"西藏","value":42},{"name":"陕西","value":48},{"name":"甘肃","value":38},{"name":"青海","value":4},{"name":"宁夏","value":17},{"name":"新疆","value":27},{"name":"台湾","value":76},{"name":"香港","value":83},{"name":"澳门","value":77},{"name":"南海诸岛","value":41},{"name":"南海诸岛","value":7}];
+			renderTable(data);
+			var map = new Highcharts.Map('map', {
+				chart: {
+				    type: 'map'
+				},
+				mapNavigation: {
+				    enabled: true, // 开启地图导航器，默认是 false
+				    enableButtons: true, // 是否启用缩放按钮
+				    buttonOptions: {    // 缩放按钮相关样式
+				        // ...
+				    },
+				    buttons: {
+				        zoomIn: {        // 缩小按钮相关配置
+				            // ...
+				        },
+				        zoomOut: {       // 放大按钮相关配置  
+				            // ...
+				        }
+				    }
+				},
+				title: {
+					text: '中国地图'
+				},
+				colorAxis: {
+					min: 0,
+					minColor: 'rgb(255,255,255)',
+					maxColor: '#006cee'
+				},
+				series: [{
+				    data: data,
+				    name: '销售数据',
+				    mapData: Highcharts.maps['cn/china'],
+				    joinBy: 'name' // 根据 name 属性进行关联
+				}]
+			});
+        };
+		
+        // 省份各个城市渲染
+        function cityRender(provinceName){
+        	var getMapUrl = "";
+			var data = [];
+			var provincePin = "";
+        	for(var q = 0;q < allData.length;q++){
+        		if(provinceName == allData[q].provinceName){
+        			getMapUrl = "https://data.jianshukeji.com/geochina/" + allData[q].provincePin + ".js";
+        			provincePin = allData[q].provincePin;
+        			data = allData[q].city;
+        		}
+        	};
+
+        	renderTable(data);
+        	$.getScript(getMapUrl,function(){
+				var map = new Highcharts.Map('map', {
+						title: {
+						text: provinceName
+					},
+					colorAxis: {
+						min: 0,
+						minColor: 'rgb(255,255,255)',
+						maxColor: '#006cee'
+					},
+					mapNavigation: {
+					    enabled: true, // 开启地图导航器，默认是 false
+					    enableButtons: true, // 是否启用缩放按钮
+					    buttonOptions: {    // 缩放按钮相关样式
+					        // ...
+					    },
+					    buttons: {
+					        zoomIn: {        // 缩小按钮相关配置
+					            // ...
+					        },
+					        zoomOut: {       // 放大按钮相关配置  
+					            // ...
+					        }
+					    }
+					},
+					series: [{
+						data: data,
+						name: '销售数据',
+						mapData: Highcharts.maps['cn/' + provincePin],
+						joinBy: 'name' // 根据 name 属性进行关联
+					}]
+				});
+			});
+        }
+
+        // 渲染表格数据
+        function renderTable(data){
+            $(".trs").remove();
+            for(var z = 0;z < data.length;z++){
+                var tr = $("<tr class='trs row'></tr>");
+                var tdIndex = $("<td class='active col-md-3'></td>");
+                var tdName = $("<td class='active col-md-6'></td>");
+                var tdValue = $("<td class='active col-md-3'></td>");
+                tdIndex.html(z+1);
+                tdName.html(data[z].name);
+                tdValue.html(data[z].value);
+                tdIndex.appendTo(tr);
+                tdName.appendTo(tr);
+                tdValue.appendTo(tr);
+                tr.appendTo($("#tableData"));
+            }
+        }
+
+	</script>
+</body>
+</html>
